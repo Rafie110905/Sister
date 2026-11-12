@@ -40,11 +40,26 @@ def load_image(task):
     return Image.open(src).convert("RGB")
 
 # ======================= TAHAP PIPELINE =======================
-def sobel(gray):
+def sobel_lama(gray):
+    """Versi awal: banyak array sementara -> berat di memori (disimpan untuk perbandingan)."""
     a = gray.astype(np.float32)
     gx = (a[:-2, 2:] + 2*a[1:-1, 2:] + a[2:, 2:]) - (a[:-2, :-2] + 2*a[1:-1, :-2] + a[2:, :-2])
     gy = (a[2:, :-2] + 2*a[2:, 1:-1] + a[2:, 2:]) - (a[:-2, :-2] + 2*a[:-2, 1:-1] + a[:-2, 2:])
     return np.hypot(gx, gy)
+
+def sobel(gray):
+    """Versi hemat memori: bentuk separable + operasi in-place.
+    Sobel-x = haluskan vertikal [1,2,1] lalu selisih horizontal [1,0,-1]
+    Sobel-y = selisih vertikal  [1,0,-1] lalu haluskan horizontal [1,2,1]
+    Hasil sama dengan sobel_lama, tetapi hanya ~4 array sementara (bukan ~20)."""
+    a = gray.astype(np.float32)
+    mid = a[1:-1]
+    s = a[:-2] + a[2:]; s += mid; s += mid          # haluskan vertikal
+    d = a[2:] - a[:-2]                              # selisih vertikal
+    gx = s[:, 2:] - s[:, :-2]
+    gy = d[:, :-2] + d[:, 2:]; gy += d[:, 1:-1]; gy += d[:, 1:-1]
+    gx *= gx; gy *= gy; gx += gy
+    return np.sqrt(gx, out=gx)
 
 D, HEADS, PATCH, LAYERS = 128, 4, 8, 2
 _rng = np.random.default_rng(42)              # bobot tetap & sama di semua proses
