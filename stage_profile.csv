@@ -1,0 +1,7 @@
+stage,seconds,percent
+load,0.0982,11.9
+resize,0.1130,13.7
+grayscale,0.0056,0.7
+blur,0.0296,3.6
+sobel,0.1745,21.2
+transformer,0.4029,48.9
